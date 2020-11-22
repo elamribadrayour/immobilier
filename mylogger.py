@@ -148,7 +148,7 @@ class MyLogger(logging.Logger):
             output.update(caller)
         return output
 
-    def format_message(self, level, msg, category=None, code=None, 
+    def format_message(self, level, msg, category=None,
                        input_tags=None, error_message=None):
         """
         The function formats the output message using the set of parameters
@@ -166,7 +166,6 @@ class MyLogger(logging.Logger):
         formatted_message = logging.getLevelName(level) + f";"
         formatted_message += f"{self.time()};"
         formatted_message += f"{category};" if category is not None else f"NULL;"
-        formatted_message += f"{code};" if code is not None else f"NULL;"
         formatted_message += f"{self.escape_string(msg)};"
         formatted_message += f"{self.tags(all_tags)};" if all_tags is not None else "{};"
         formatted_message += f"{self.escape_string(error_message)}" if error_message is not None else "NULL"
@@ -176,7 +175,6 @@ class MyLogger(logging.Logger):
     def logkwargs(self, kwargs):
         output = dict(kwargs)
         output.pop("category", None)
-        output.pop("code", None)
         output.pop("tags", None)
         output.pop("error_message", None)
         return output
@@ -188,7 +186,7 @@ class MyLogger(logging.Logger):
         message = ""
         if self.isEnabledFor(logging.WARNING):
             message = self.format_message(logging.WARNING, msg, kwargs.get("category"),
-                                          kwargs.get("code"), kwargs.get("tags"))
+                                          kwargs.get("tags"))
         return logging.Logger.warning(self, message, *args, **self.logkwargs(kwargs))
 
     def error(self, msg, *args, **kwargs):
@@ -198,7 +196,7 @@ class MyLogger(logging.Logger):
         message = ""
         if self.isEnabledFor(logging.ERROR):
             message = self.format_message(logging.ERROR, msg, kwargs.get("category"),
-                                          kwargs.get("code"), kwargs.get("tags"), kwargs.get("error_message"))
+                                          kwargs.get("tags"), kwargs.get("error_message"))
         return logging.Logger.error(self, message, *args, **self.logkwargs(kwargs))
 
     def info(self, msg, *args, **kwargs):
@@ -208,7 +206,7 @@ class MyLogger(logging.Logger):
         message = ""
         if self.isEnabledFor(logging.INFO):
             message = self.format_message(logging.INFO, msg, kwargs.get("category"),
-                                          kwargs.get("code"), kwargs.get("tags"))
+                                          kwargs.get("tags"))
         return logging.Logger.info(self, message, *args, **self.logkwargs(kwargs))
 
     def monitoring(self, delay, function_name, *args, **kwargs):
@@ -233,10 +231,10 @@ class MyLogger(logging.Logger):
         message = ""
         if self.isEnabledFor(logging.DEBUG):
             message = self.format_message(logging.DEBUG, msg, kwargs.get("category"),
-                                          kwargs.get("code"), kwargs.get("tags"))
+                                          kwargs.get("tags"))
         return logging.Logger.debug(self, message, *args, **self.logkwargs(kwargs))
 
 
 logging.setLoggerClass(MyLogger)
 logging.config.fileConfig("logging.cfg")
-logger = logging.getLogger("Stilog Logger")
+logger = logging.getLogger("My Logger")
