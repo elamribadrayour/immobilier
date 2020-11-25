@@ -3,4 +3,4 @@
 * npm install
 * npm run
 
-Le projet est également accessible à l'adresse suivant [huile & beurre](http://www.huileetbeurre.herokuapp.com)
+Le projet est également accessible à l'adresse suivant [huile & beurre](https://huilebeurre.herokuapp.com/)
