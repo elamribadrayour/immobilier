@@ -1,9 +1,9 @@
 import './App.css';
 import React from 'react';
 
-import { AgGridColumn, AgGridReact } from 'ag-grid-react';
-import 'ag-grid-community/dist/styles/ag-grid.css';
-import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
+// import { AgGridColumn, AgGridReact } from 'ag-grid-react';
+// import 'ag-grid-community/dist/styles/ag-grid.css';
+// import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
 
 import Papa from "papaparse";
 import Map from 'pigeon-maps';
@@ -21,48 +21,14 @@ const useSemiPersistentState = (key, initialState) =>
   return [value, setValue];
 }
 
-const dataReducer = (state, action) => 
-{
-  switch (action.type) 
-  {
-    case 'DATA_FETCH_INIT':
-      return {
-        ...state,
-        isLoading: true,
-        isError: false,
-      };
-    case 'DATA_FETCH_SUCCESS':
-      return {
-        ...state,
-        isLoading: false,
-        isError: false,
-        data: action.payload,
-      };
-    case 'DATA_FETCH_FAILURE':
-      return {
-        ...state,
-        isLoading: false,
-        isError: true,
-      };
-    case 'DATA_REMOVE':
-      return {
-        ...state,
-        data: state.data.filter(
-          node => action.payload.id !== node.id
-        ),
-      };
-    default:
-      throw new Error();
-  }
-};
-
 const filteredSales = (sales, priceMin, priceMax) =>
 {
-  sales.data.forEach((item, i) => 
+  sales.forEach((item, i) => 
   {
     item.id = (i + 1).toString();
   });
-  var output = sales.data.filter( node => node.valeur_fonciere >= priceMin && node.valeur_fonciere < priceMax);
+
+  var output = sales.filter( node => node.valeur_fonciere >= priceMin && node.valeur_fonciere < priceMax);
   output.sort(function(a, b) 
   {
     return a.valeur_fonciere - b.valeur_fonciere;
@@ -91,7 +57,11 @@ const ParseInput = (text) =>
     return output;
 }
 
-const Data = (input) =>{ return (input.data.map(item =>  <option key={item[0]}>{item[2]} - {item[1]}</option>));}
+const Data = (input) =>
+{   
+  const output = input.data.map(item =>  ({label : item[1], value : item[2] }));
+  return output;
+}
 
 const App = () => 
 {
@@ -110,6 +80,8 @@ const App = () =>
 
   const [latlongitudes, setLatLongitudes] = useSemiPersistentState('longitudes', []);
 
+  const [sales, setSales] = useSemiPersistentState('sales', []);
+  const [isLoadingSales, setIsLoadingSales] = React.useState(true);
 
   const url = "http://api.cquest.org/dvf?code_postal=" + zipCode.toString();
 
@@ -126,46 +98,55 @@ const App = () =>
       })
   }, []);
 
-  const [sales, dispatchSales] = React.useReducer(
-      dataReducer,
-      { 
-        data: [], isLoading: false, isError: false 
-  });
 
   React.useEffect(() => 
   {
-    dispatchSales({ type: 'DATA_FETCH_INIT' });
-
+    setIsLoadingSales(true);
     fetch(`${url}`)
       .then(response => response.json())
       .then(output => 
       {
-        dispatchSales(
-        {
-          type: 'DATA_FETCH_SUCCESS',
-          payload: output.resultats,
-        });
-      }).catch(() => dispatchSales({ type: 'DATA_FETCH_FAILURE' }));
+        setSales(output.resultats);
+        setIsLoadingSales(false);
+      });
   }, [zipCode, url]);
-
-  const output = filteredSales(sales, priceMin, priceMax);
-  const latlong = output.map(item => [item.lat, item.lon]);
-  console.log(latlong);
 
   const onZipCodeChanged = (event) => 
   {
-    const chosenZipCode = event.target.value.split('-')[0].trim();
-    const chosenCommune = event.target.value.split('-')[1].trim();
-    const row = zipCodes.data.filter(item => item[2] === chosenZipCode && item[1] === chosenCommune);
+    const row = zipCodes.data.filter(item => item[2] === event.value && item[1] === event.label);
     const values = row[0][5].split(',');
     const latitude = parseFloat(values[0].trim());
     const longitude = parseFloat(values[1].trim());
-    setLatLongitudes(latlong);
-
-    setZipCode(chosenZipCode);
+    setZipCode(event.value);
     setLatitude(latitude);
     setLongitude(longitude);
+    setLatLongitudes(filteredSales(sales, priceMin, priceMax).map(item => [item.lat, item.lon]));
   }
+
+  const onPriceMinChanged = (event) =>
+  {
+    setPriceMin(event.target.value)
+    setLatLongitudes(filteredSales(sales, priceMin, priceMax).map(item => [item.lat, item.lon]));
+  }
+
+  const onPriceMaxChanged = (event) =>
+  {
+    setPriceMax(event.target.value)
+    setLatLongitudes(filteredSales(sales, priceMin, priceMax).map(item => [item.lat, item.lon]));
+  }
+
+  const onSurfaceMinChanged = (event) =>
+  {
+    setSurfaceMin(event.target.value)
+    setLatLongitudes(filteredSales(sales, priceMin, priceMax).map(item => [item.lat, item.lon]));
+  }
+
+  const onSurfaceMaxChanged = (event) =>
+  {
+    setSurfaceMax(event.target.value)
+    setLatLongitudes(filteredSales(sales, priceMin, priceMax).map(item => [item.lat, item.lon]));
+  }
+
 
   return (
     <div>
@@ -177,16 +158,17 @@ const App = () =>
             (<Zipcodes data = {Data(zipCodes)}  onChange = {onZipCodeChanged}/>)
         }
       </div>
-      <Input id="priceMin" label="Price Min :" type="number" value={priceMin} onChange={event => setPriceMin(event.target.value)}/>
-      <Input id="priceMax" label="Price Max :" type="int" value={priceMax} onChange={event => setPriceMax(event.target.value)}/>
-      <Input id="surfaceMin" label="Surface Min :" type="number" value={surfaceMin} onChange={event => setSurfaceMin(event.target.value)}/>
-      <Input id="surfaceMax" label="Surface Max :" type="number" value={surfaceMax} onChange={event => setSurfaceMax(event.target.value)}/>
-      <div className="ag-theme-alpine" style={ { height: 700, width: 1850 } }>
+      <Input id="priceMin" label="Price Min :" type="number" value={priceMin} onChange={onPriceMinChanged}/>
+      <Input id="priceMax" label="Price Max :" type="int" value={priceMax} onChange={onPriceMaxChanged}/>
+      <Input id="surfaceMin" label="Surface Min :" type="number" value={surfaceMin} onChange={onSurfaceMinChanged}/>
+      <Input id="surfaceMax" label="Surface Max :" type="number" value={surfaceMax} onChange={onSurfaceMaxChanged}/>
+      <div style={ { height: 700, width: 1850 } }>
         {
           sales.isError && <p>Something went wrong ...</p>
         }
         <Map center={[latitude, longitude]}>
           {
+            !isLoadingSales &&
             latlongitudes.map(item => <Marker anchor={[item[0], item[1]]}/>)
           }
         </Map>
