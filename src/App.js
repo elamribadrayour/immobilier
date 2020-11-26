@@ -1,67 +1,31 @@
 import './App.css';
 import React from 'react';
 
-// import { AgGridColumn, AgGridReact } from 'ag-grid-react';
-// import 'ag-grid-community/dist/styles/ag-grid.css';
-// import 'ag-grid-community/dist/styles/ag-theme-alpine.css';
 
-import Papa from "papaparse";
-import Map from 'pigeon-maps';
-import Marker from "pigeon-marker";
 
 import Input from './Input';
-import Title from './Title';
-import Zipcodes from './Zipcodes';
-// import TilerMap from './TilerMap';
+import {filterSales} from './Sales';
+import {useSemiPersistentState} from './States';
+import Zipcodes, {formatZipcodes, parseInputZipcodes} from './Zipcodes';
 
-const useSemiPersistentState = (key, initialState) =>
-{
-  const [value, setValue] = React.useState(initialState);
-  React.useEffect(() => { localStorage.setItem(key, value); }, [value, key]);    
-  return [value, setValue];
-}
+import {MapContainer, TileLayer, Marker, Popup} from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from "leaflet";
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
 
-const filteredSales = (sales, priceMin, priceMax) =>
-{
-  sales.forEach((item, i) => 
-  {
-    item.id = (i + 1).toString();
-  });
-
-  var output = sales.filter( node => node.valeur_fonciere >= priceMin && node.valeur_fonciere < priceMax);
-  output.sort(function(a, b) 
-  {
-    return a.valeur_fonciere - b.valeur_fonciere;
-  })
-
-  return output;
-}
-
-const ParseInput = (text) => 
-{
-    var output = Papa.parse(text);
-    output.data.sort(function(a, b) 
+let DefaultIcon = L.icon(
     {
-      return a[2] - b[2];
-    })
+      ...L.Icon.Default.prototype.options,
+      iconUrl: icon,
+      iconRetinaUrl: iconRetina,
+      shadowUrl: iconShadow
+    });
 
-    var obj = {};
+L.Marker.prototype.options.icon = DefaultIcon;
 
-    for ( var i=0, len=output.data.length; i < len; i++ )
-        obj[output.data[i][0]] = output.data[i];
-    
-    output.data = [];
-    for ( var key in obj )
-      output.data.push(obj[key]);
 
-    return output;
-}
-
-const Data = (input) =>
-{   
-  const output = input.data.map(item =>  ({label : item[1], value : item[2] }));
-  return output;
-}
 
 const App = () => 
 {
@@ -78,12 +42,12 @@ const App = () =>
   const [latitude, setLatitude] = useSemiPersistentState('latitude', 43.296482);
   const [longitude, setLongitude] = useSemiPersistentState('longitude', 5.36978);
 
-  const [latlongitudes, setLatLongitudes] = useSemiPersistentState('longitudes', []);
+  const [geographicalInfo, setGeographicalInfo] = useSemiPersistentState('longitudes', []);
 
   const [sales, setSales] = useSemiPersistentState('sales', []);
   const [isLoadingSales, setIsLoadingSales] = React.useState(true);
 
-  const url = "http://api.cquest.org/dvf?code_postal=" + zipCode.toString();
+  const [url, setUrl] = useSemiPersistentState('url', 'http://api.cquest.org/dvf?code_postal=13007');
 
   React.useEffect(() => 
   {
@@ -92,12 +56,10 @@ const App = () =>
       .then(response => response.text())
       .then(text => 
       {
-          var csvData = ParseInput(text);
-          setZipCodes(csvData);
+          setZipCodes(parseInputZipcodes(text));
           setIsLoadingZipCodes(false);
       })
   }, []);
-
 
   React.useEffect(() => 
   {
@@ -107,94 +69,80 @@ const App = () =>
       .then(output => 
       {
         setSales(output.resultats);
+        setGeographicalInfo(filterSales(sales, priceMin, priceMax, surfaceMin, surfaceMax));
         setIsLoadingSales(false);
       });
-  }, [zipCode, url]);
+  }, [url, setSales]);
 
   const onZipCodeChanged = (event) => 
   {
-    const row = zipCodes.data.filter(item => item[2] === event.value && item[1] === event.label);
+    const row = zipCodes.data.filter(item => item[1] === event.target.value);
     const values = row[0][5].split(',');
-    const latitude = parseFloat(values[0].trim());
-    const longitude = parseFloat(values[1].trim());
-    setZipCode(event.value);
-    setLatitude(latitude);
-    setLongitude(longitude);
-    setLatLongitudes(filteredSales(sales, priceMin, priceMax).map(item => [item.lat, item.lon]));
+    const tmp_latitude = parseFloat(values[0].trim());
+    const tmp_longitude = parseFloat(values[1].trim());
+    const zipcode = row[0][2];
+    
+    setZipCode(zipcode);
+    setLatitude(tmp_latitude);
+    setLongitude(tmp_longitude);
+    setUrl(`http://api.cquest.org/dvf?code_postal=${zipCode.toString()}`);
+
+    console.log("out");
+    console.log(latitude, longitude)
   }
 
   const onPriceMinChanged = (event) =>
   {
     setPriceMin(event.target.value)
-    setLatLongitudes(filteredSales(sales, priceMin, priceMax).map(item => [item.lat, item.lon]));
+    setGeographicalInfo(filterSales(sales, priceMin, priceMax, surfaceMin, surfaceMax));
   }
 
   const onPriceMaxChanged = (event) =>
   {
     setPriceMax(event.target.value)
-    setLatLongitudes(filteredSales(sales, priceMin, priceMax).map(item => [item.lat, item.lon]));
+    setGeographicalInfo(filterSales(sales, priceMin, priceMax, surfaceMin, surfaceMax));
   }
 
   const onSurfaceMinChanged = (event) =>
   {
     setSurfaceMin(event.target.value)
-    setLatLongitudes(filteredSales(sales, priceMin, priceMax).map(item => [item.lat, item.lon]));
+    setGeographicalInfo(filterSales(sales, priceMin, priceMax, surfaceMin, surfaceMax));
   }
 
   const onSurfaceMaxChanged = (event) =>
   {
     setSurfaceMax(event.target.value)
-    setLatLongitudes(filteredSales(sales, priceMin, priceMax).map(item => [item.lat, item.lon]));
+    setGeographicalInfo(filterSales(sales, priceMin, priceMax, surfaceMin, surfaceMax));
   }
 
-
   return (
-    <div>
-      <Title label="Immobilier"/>
+    <>
       <div>
         {
-            isLoadingZipCodes ?
-            (<p>Loading zipcodes ...</p>) :
-            (<Zipcodes data = {Data(zipCodes)}  onChange = {onZipCodeChanged}/>)
+          isLoadingZipCodes ?
+          (<p>Loading zipcodes ...</p>) :
+          (<Zipcodes data = {formatZipcodes(zipCodes)}  onChange = {onZipCodeChanged}/>)
         }
+        <Input id="priceMin" label="Price Min : " type="number" value={priceMin} unit="€" onChange={onPriceMinChanged}/>
+        <Input id="priceMax" label="Price Max : " type="int" value={priceMax} unit="€" onChange={onPriceMaxChanged}/>
+        <Input id="surfaceMin" label="Surface Min : " type="number" value={surfaceMin} unit="m2" onChange={onSurfaceMinChanged}/>
+        <Input id="surfaceMax" label="Surface Max : " type="number" value={surfaceMax} unit="m2" onChange={onSurfaceMaxChanged}/>
       </div>
-      <Input id="priceMin" label="Price Min :" type="number" value={priceMin} onChange={onPriceMinChanged}/>
-      <Input id="priceMax" label="Price Max :" type="int" value={priceMax} onChange={onPriceMaxChanged}/>
-      <Input id="surfaceMin" label="Surface Min :" type="number" value={surfaceMin} onChange={onSurfaceMinChanged}/>
-      <Input id="surfaceMax" label="Surface Max :" type="number" value={surfaceMax} onChange={onSurfaceMaxChanged}/>
-      <div style={ { height: 700, width: 1850 } }>
-        {
-          sales.isError && <p>Something went wrong ...</p>
-        }
-        <Map center={[latitude, longitude]}>
-          {
-            !isLoadingSales &&
-            latlongitudes.map(item => <Marker anchor={[item[0], item[1]]}/>)
-          }
-        </Map>
-      </div>
-    </div>
+      <MapContainer center={[latitude, longitude]} zoom={13} scrollWheelZoom={false}>
+          <TileLayer
+            attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+      </MapContainer>,
+    </>
   );
 }
 
 export default App;
 
 /**
- *        { sales.isLoading ? 
-          (<p>IsLoading ...</p>) :
-          (<div className="ag-theme-alpine" style={ { height: 400, width: 1850 } }>
-            <AgGridReact
-                rowData={output}>
-                <AgGridColumn field="id" sortable={true}></AgGridColumn>
-                <AgGridColumn field="valeur_fonciere" sortable={true} ></AgGridColumn>
-                <AgGridColumn field="surface_terrain" sortable={true} ></AgGridColumn>
-                <AgGridColumn field="code_voie"></AgGridColumn>
-                <AgGridColumn field="type_voie"></AgGridColumn>
-                <AgGridColumn field="voie"></AgGridColumn>
-                <AgGridColumn field="code_postal" sortable={true}></AgGridColumn>
-                <AgGridColumn field="lat" sortable={true}></AgGridColumn>
-                <AgGridColumn field="lon" sortable={true}></AgGridColumn>
-            </AgGridReact>
-          </div>)
-        }
+ *           {
+            !isLoadingSales &&
+            geographicalInfo.map(item => <Marker position={[item.lat, item.lon]}><Popup>{item.numero_voie} {item.type_voie} {item.voie}</Popup></Marker>)
+          }
  */

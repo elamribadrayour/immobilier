@@ -1,36 +1,45 @@
 import React, { Component } from "react";
 
-import Select from "react-select"
-import {FixedSizeList} from "react-window";
+import Papa from "papaparse";
 
-const height = 35;
+import './Zipcodes.css'; 
 
-class MenuList extends Component 
-{
-    render() 
-    {
-      const { options, children, maxHeight, getValue } = this.props;
-      const [value] = getValue();
-      const initialOffset = options.indexOf(value) * height;
-  
-      return (
-        <FixedSizeList
-          height={maxHeight}
-          itemCount={children.length}
-          itemSize={height}
-          initialScrollOffset={initialOffset}
-        >
-          {({ index, style }) => <div style={style}>{children[index]}</div>}
-        </FixedSizeList>
-      );
-    }
+export const formatZipcodes = (input) =>
+{   
+  return input.data.map(item => <option key={item[0]}>{item[1]}</option>);
 }
+
+export const parseInputZipcodes = (text) => 
+{
+    var output = Papa.parse(text);
+    output.data.sort(function(a, b) 
+    {
+      return a[2] - b[2];
+    })
+
+    var obj = {};
+
+    for ( var i=0, len=output.data.length; i < len; i++ )
+        obj[output.data[i][0]] = output.data[i];
+    
+    output.data = [];
+    for ( var key in obj )
+      output.data.push(obj[key]);
+
+    return output;
+}
+
 
 const Zipcodes = ({data, onChange}) =>
 {
     return(
-        <div>
-            <Select onChange={onChange} components={{MenuList}} options={data}/>
+        <div className="Zipcodes" >
+        <label htmlFor="zipCode">
+            <strong>
+                {"Zipcode : "}
+            </strong>
+        </label>
+            <select onChange={onChange}>{data}</select>
         </div>
     );
 }

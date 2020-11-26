@@ -1,15 +1,20 @@
+import './Input.css'; 
 
-const Input = ({id, label, type, isFocused, value, onChange}) =>
+const Input = ({id, label, type, unit, value, onChange}) =>
 {
   return (
-    <div>
+    <div className="Input" >
       <label htmlFor={id}>
         <strong>
-          {label}
+          {label} 
         </strong>
       </label>
-      <input id={id} type={type} value={value} onChange={onChange}/>
-      <hr/>
+      <input id={id} type={type} value={value} onChange={onChange}/> 
+      <label htmlFor={id}>
+        <strong>
+           {unit}
+        </strong>
+      </label>
     </div>);
 }
 
