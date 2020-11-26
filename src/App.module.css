@@ -1,0 +1,127 @@
+.container {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    background-color: gray;
+}
+
+.sidebar {
+    width: 20%;
+    height: 100%;
+    background-color: white;
+}
+
+.sidebarHeader {
+    width: 100%;
+    height: 20%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebarBody {
+    width: 100%;
+    height: 80%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.sidebarBody form {
+    width: 100%;
+    height: 50%;
+    padding: 20px;
+}
+
+.sidebarBody form input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 5px;
+    border: 1px solid lightgray;
+    border-radius: 6px;
+}
+
+.sidebarBody form button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 25px;
+    border-bottom: 4px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    color: #FFFF;
+    background-color: #64cd85;
+}
+
+.pointsContainer {
+    width: 100%;
+    height: 50%;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pointHeader {
+    width: 100%;
+    height: 10%;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: row;
+}
+
+.pointHeader h5 {
+    margin-left: 5px;
+    font-weight: 300;
+}
+
+.pointList {
+    width: 100%;
+    height: 90%;
+    overflow-y: scroll;
+}
+
+.pointList::-webkit-scrollbar {
+    display: none;
+}
+
+.pointItem {
+    width: 100%;
+    height: 30%;
+    margin: 10px 0px;
+    border-radius: 6px;
+    background-color: white;
+}
+
+.pointInfo {
+    width: 100%;
+    height: 60%;
+    padding: 5px 10px;
+}
+
+.pointInfo p {
+    font-size: 12px;
+    font-weight: 300;
+}
+
+.pointActions {
+    width: 100%;
+    height: 40%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.pointActions button {
+    padding: 3px 10px;
+    margin-right: 10px;
+    border-radius: 5px;
+}
+
+.map {
+    width: 80%;
+    height: 100%;
+    background-color: black;
+}
