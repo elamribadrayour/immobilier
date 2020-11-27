@@ -1,13 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
-  "icons": [
-    {
-      "src": "bart.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
-  ],
+  "short_name": "Immobilier",
+  "name": "Immobilier",
+  "icons": [],
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#000000",
