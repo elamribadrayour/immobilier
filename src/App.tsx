@@ -1,13 +1,10 @@
-
-
 // Packages
 import { PropsWithChildren } from 'react';
 import React, { useState, useEffect } from 'react';
 
 import axios from 'axios';
-import { LatLng, LatLngTuple } from 'leaflet';
+import { LatLngTuple } from 'leaflet';
 import { Map, Marker, TileLayer, Popup } from 'react-leaflet';
-import { FaMapMarkerAlt, FaMapMarked, FaTrash, FaEye } from 'react-icons/fa';
 
 import Key from './Key';
 
@@ -16,7 +13,6 @@ import './Global.css';
 import styles from './App.module.css';
 
 import SideBar from './SideBar';
-import {filterSales} from './Sales/Sales'
 
 // Component
 const App: React.FC = () => 
@@ -41,9 +37,9 @@ const App: React.FC = () =>
   // Points
   const point : Point = { country : "France", district : "7e", locality : "Marseille", address : "125 rue du vallon des auffes", coordinates : [10, 10]};
   const [points, setPoints] = useState<Point[]>([point]);
+  const [allPoints, setAllPoints] = useState<LatLngTuple[]>([[0, 0]]);
   const [selectedPoint, setSelectedPoint] = useState<LatLngTuple>([0, 0]);
   const [selectedPoints, setSelectedPoints] = useState<LatLngTuple[]>([[0, 0]]);
-  const [allPoints, setAllPoints] = useState<LatLngTuple[]>([[0, 0]]);
 
   // Get user current position
   useEffect(() => 
@@ -73,7 +69,6 @@ const App: React.FC = () =>
 
       setPoints(currentPoints => [...currentPoints, newPoint]);
       setSelectedPoint(coordinates);
-
       setSelectedPoints([...selectedPoints, coordinates]);
     }
   }
@@ -102,10 +97,9 @@ const App: React.FC = () =>
   function deleteOrigin(coordinates : LatLngTuple[]): LatLngTuple[] 
   {    
     const updatedselectedPoints = [...coordinates];
-    let index = updatedselectedPoints.indexOf([0, 0]);
     for (let i = 0; i < updatedselectedPoints.length; i++) 
     {
-      if(updatedselectedPoints[i][0] == 0 && updatedselectedPoints[i][1] == 0) 
+      if(updatedselectedPoints[i][0] === 0 && updatedselectedPoints[i][1] === 0) 
       {
         updatedselectedPoints.splice(i, 1);
         i--;
@@ -138,6 +132,8 @@ const App: React.FC = () =>
   async function onZipcodeSubmitForm(data: any) 
   {
     let output = await axios.get(`http://api.cquest.org/dvf?code_postal=${data.zipcode}`);
+    let center = await axios.get(`http://dev.virtualearth.net/REST/v1/Locations/FR/${data.zipcode}/${data.city}/${data.address}?key=${Key}`)
+    let centerCoordinates: LatLngTuple = center.data.resourceSets[0].resources[0].geocodePoints[0].coordinates;
     let response = output.data.resultats;
 
     let coordinates: LatLngTuple[] = response.map((item) => 
@@ -150,9 +146,9 @@ const App: React.FC = () =>
     coordinates = deleteOrigin(coordinates);
 
     let mini_response = coordinates.slice(1, 10);
-
+    setAllPoints(response);
     setSelectedPoints(mini_response);
-    setAllPoints(response)
+    setMapPosition(centerCoordinates);
   }
 
   // Show Point
