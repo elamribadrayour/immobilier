@@ -35,7 +35,7 @@ button {
 p,
 input {
     font-family: 'Poppins', sans-serif;
-    font-weight: 400;
+    font-weight: 500;
 }
 
 .logo 
@@ -43,3 +43,9 @@ input {
     color : #65e080;
     size : 40;
 }
+
+.leaflet-div-icon 
+{
+    color: #515151;
+    border: none;
+}  

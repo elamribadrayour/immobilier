@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaMapMarkerAlt, FaMapMarked, FaTrash, FaEye } from 'react-icons/fa';
+import { FaMapMarkerAlt } from 'react-icons/fa';
 
 import './Global.css';
 import styles from './App.module.css';
